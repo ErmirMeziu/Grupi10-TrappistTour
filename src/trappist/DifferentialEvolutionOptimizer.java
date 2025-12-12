@@ -105,3 +105,70 @@ public class DifferentialEvolutionOptimizer {
                 stagnationCount = 0;
             }
         }
+
+        // RETURN GLOBAL BEST
+        int best = 0;
+        for (int i = 1; i < populationSize; i++) {
+            if (score[i] < score[best])
+                best = i;
+        }
+
+        return pop[best];
+    }
+
+    private int rand(int n) {
+        return (int)(Math.random() * n);
+    }
+
+    private void clampVector(double[] x) {
+        int legs = 7;
+
+        x[0] = clamp(x[0], 0.3, 0.7);
+        x[1] = clamp(x[1], 0.4, 0.6);
+        x[2] = clamp(x[2], 900, 1400);
+
+        int k = 3;
+
+        for (int i = 0; i < legs - 1; i++) {
+
+            x[k] = clamp(x[k], 0.0, Math.PI);  k++;
+            x[k] = clamp(x[k], 1.1, 10.0);     k++;
+            x[k] = clamp(x[k], 0.1, 0.9);      k++;
+            x[k] = clamp(x[k], 50, 1200);      k++;
+        }
+
+        // dt fix
+        int idx = 3;
+        for (int i = 0; i < legs - 1; i++) {
+            double eta = x[idx + 2];
+            double T   = x[idx + 3];
+
+            if (eta >= 0.95) eta = 0.95;
+            if (eta <= 0.05) eta = 0.05;
+            if (T < 50)      T = 50;
+
+            x[idx + 2] = eta;
+            x[idx + 3] = T;
+
+            idx += 4;
+        }
+
+        // PERMUTATION REPAIR
+        double[] keys = new double[legs];
+        for (int i = 0; i < legs; i++)
+            keys[i] = x[idx + i];
+
+        Integer[] order = new Integer[legs];
+        for (int i = 0; i < legs; i++)
+            order[i] = i;
+
+        java.util.Arrays.sort(order, (a, b) -> Double.compare(keys[a], keys[b]));
+
+        for (int i = 0; i < legs; i++)
+            x[idx + i] = order[i];
+    }
+
+    private double clamp(double v, double lo, double hi) {
+        return Math.max(lo, Math.min(v, hi));
+    }
+}
